@@ -2,7 +2,10 @@
 #define EMPLOYEES_H
 
 #define MAX_EMPLOYEES 100
+
+#ifndef STR_LEN
 #define STR_LEN 50
+#endif
 
 typedef struct {
     char id[STR_LEN];
@@ -17,10 +20,9 @@ typedef struct {
 extern Employee employees[MAX_EMPLOYEES];
 extern int employeeCount;
 
+void calculateSalary(Employee *emp);
 void addEmployee(void);
 void displayEmployees(void);
 void searchEmployee(void);
-void calculateSalary(Employee *emp);
-void clearInputBuffer(void);
 
 #endif

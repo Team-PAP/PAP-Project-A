@@ -1,17 +1,23 @@
 #include <stdio.h>
 #include <string.h>
 #include "employees.h"
+#include "validation.h"
 
 Employee employees[MAX_EMPLOYEES];
 int employeeCount = 0;
 
-void clearInputBuffer(void) {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
-}
-
 void calculateSalary(Employee *emp) {
     emp->grossSalary = emp->basicSalary + emp->housingAllowance + emp->transportAllowance;
+}
+
+/* Returns 1 if an employee with this ID is already stored */
+static int employeeIdExists(const char *id) {
+    for (int i = 0; i < employeeCount; i++) {
+        if (strcmp(employees[i].id, id) == 0) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void addEmployee(void) {
@@ -22,45 +28,25 @@ void addEmployee(void) {
 
     Employee e;
     printf("\n--- Add New Employee ---\n");
-    
-    printf("Enter Employee ID: ");
-    scanf("%49s", e.id);
-    clearInputBuffer();
 
-    printf("Enter Employee Name: ");
-    fgets(e.name, STR_LEN, stdin);
-    e.name[strcspn(e.name, "\n")] = '\0';
-
-    printf("Enter Department: ");
-    fgets(e.department, STR_LEN, stdin);
-    e.department[strcspn(e.department, "\n")] = '\0';
-
-    do {
-        printf("Enter Basic Salary (N$): ");
-        if (scanf("%lf", &e.basicSalary) != 1 || e.basicSalary < 0) {
-            printf("Invalid input. Basic salary must be non-negative.\n");
-            clearInputBuffer();
-            e.basicSalary = -1;
+    for (;;) {
+        if (!promptText("Enter Employee ID: ", e.id, sizeof(e.id))) {
+            return;
         }
-    } while (e.basicSalary < 0);
-
-    do {
-        printf("Enter Housing Allowance (N$): ");
-        if (scanf("%lf", &e.housingAllowance) != 1 || e.housingAllowance < 0) {
-            printf("Invalid input. Housing allowance must be non-negative.\n");
-            clearInputBuffer();
-            e.housingAllowance = -1;
+        if (strchr(e.id, ' ') != NULL) {
+            printf("Employee ID cannot contain spaces.\n");
+        } else if (employeeIdExists(e.id)) {
+            printf("That Employee ID is already in use.\n");
+        } else {
+            break;
         }
-    } while (e.housingAllowance < 0);
+    }
 
-    do {
-        printf("Enter Transport Allowance (N$): ");
-        if (scanf("%lf", &e.transportAllowance) != 1 || e.transportAllowance < 0) {
-            printf("Invalid input. Transport allowance must be non-negative.\n");
-            clearInputBuffer();
-            e.transportAllowance = -1;
-        }
-    } while (e.transportAllowance < 0);
+    if (!promptText("Enter Employee Name: ", e.name, sizeof(e.name))) return;
+    if (!promptText("Enter Department: ", e.department, sizeof(e.department))) return;
+    if (!promptMoney("Enter Basic Salary (N$): ", &e.basicSalary)) return;
+    if (!promptMoney("Enter Housing Allowance (N$): ", &e.housingAllowance)) return;
+    if (!promptMoney("Enter Transport Allowance (N$): ", &e.transportAllowance)) return;
 
     calculateSalary(&e);
     employees[employeeCount++] = e;
@@ -75,7 +61,7 @@ void displayEmployees(void) {
     }
 
     printf("\n====================================================================================================\n");
-    printf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n", "ID", "Name", "Department", "Basic", "Housing", "Transport", "Gross Pay");
+    printf("%-10s %-20s %-20s %-12s %-12s %-12s %-12s\n", "ID", "Name", "Department", "Basic", "Housing", "Transport", "Gross Pay");
     printf("====================================================================================================\n");
 
     for (int i = 0; i < employeeCount; i++) {
@@ -88,16 +74,16 @@ void displayEmployees(void) {
 }
 
 void searchEmployee(void) {
-   if (employeeCount == 0) {
+    if (employeeCount == 0) {
         printf("\nNo employees available to search.\n");
         return;
     }
 
     char searchKey[STR_LEN];
-    printf("\nEnter Employee ID or Name to Search: ");
-    clearInputBuffer();
-    fgets(searchKey, STR_LEN, stdin);
-    searchKey[strcspn(searchKey, "\n")] = '\0';
+    printf("\n");
+    if (!promptText("Enter Employee ID or Name to Search: ", searchKey, sizeof(searchKey))) {
+        return;
+    }
 
     int found = 0;
     for (int i = 0; i < employeeCount; i++) {

@@ -6,6 +6,7 @@
 #include "budget.h"
 #include "suppliers.h"
 #include "assets.h"
+#include "validation.h"
 
 
 static void printLine(char ch, int length)
@@ -25,36 +26,21 @@ static void printTitle(const char *title)
     printf("%s\n", title);
     printLine('=', 60);
 }
-static int readChoice(void)
-{
-    char buffer[32];
-    int choice;
-
-    if (fgets(buffer, sizeof(buffer), stdin) == NULL)
-    {
-        return 5;   /* input closed (e.g. Ctrl+Z): leave the menu instead of looping forever */
-    }
-    if (sscanf(buffer, "%d", &choice) != 1)
-    {
-        return -1;
-    }
-    return choice;
-}
 
 /* Gross salary = basic + housing allowance + transport allowance */
-static float calculateGross(const Employee *emp)
+static double calculateGross(const Employee *emp)
 {
-  return emp->basicSalary + emp->housingAllowance + emp->transportAllowance;;
+    return emp->basicSalary + emp->housingAllowance + emp->transportAllowance;
 }
 
 void employeeReport(void)
 {
     int i, highestIndex = 0, lowestIndex = 0;
-    float gross, total = 0.0f, highest, lowest, average;
+    double gross, total = 0.0, highest, lowest, average;
 
     printTitle("EMPLOYEE REPORT");
 
-        if (employeeCount == 0)
+    if (employeeCount == 0)
     {
         printf("No employees have been registered yet.\n");
         return;
@@ -62,7 +48,7 @@ void employeeReport(void)
 
     highest = lowest = calculateGross(&employees[0]);
 
-        for (i = 0; i < employeeCount; i++)
+    for (i = 0; i < employeeCount; i++)
     {
         gross = calculateGross(&employees[i]);
         total += gross;
@@ -79,7 +65,6 @@ void employeeReport(void)
         }
     }
 
-    
     average = total / employeeCount;
 
     printf("Total Employees : %d\n", employeeCount);
@@ -92,7 +77,7 @@ void employeeReport(void)
 void budgetReport(void)
 {
     int i, exceededCount = 0;
-    float totalAllocated = 0.0f, totalExpenditure = 0.0f, remaining;
+    double totalAllocated = 0.0, totalExpenditure = 0.0, remaining;
 
     printTitle("BUDGET REPORT");
 
@@ -145,7 +130,7 @@ void budgetReport(void)
     }
 }
 
-void supplierReport(void)
+void supplierReport(struct Supplier suppliers[], int supplierCount)
 {
     int i;
 
@@ -177,7 +162,7 @@ void supplierReport(void)
 void assetReport(void)
 {
     int i, good = 0, fair = 0, poor = 0;
-    float totalValue = 0.0f;
+    double totalValue = 0.0;
 
     printTitle("ASSET REPORT");
 
@@ -224,7 +209,7 @@ void assetReport(void)
     printf("Condition summary : Good = %d, Fair = %d, Poor = %d\n", good, fair, poor);
 }
 
-void displayReports(void)
+void displayReports(struct Supplier suppliers[], int supplierCount)
 {
     int choice;
 
@@ -238,13 +223,13 @@ void displayReports(void)
         printf("5. Back to Main Menu\n");
         printf("Enter your choice: ");
 
-        choice = readChoice();
+        choice = readInt(5);
 
         switch (choice)
         {
             case 1: employeeReport(); break;
             case 2: budgetReport();   break;
-            case 3: supplierReport(); break;
+            case 3: supplierReport(suppliers, supplierCount); break;
             case 4: assetReport();    break;
             case 5: printf("Returning to main menu...\n"); break;
             default: printf("Invalid choice. Please enter a number from 1 to 5.\n");

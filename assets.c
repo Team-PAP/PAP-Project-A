@@ -1,20 +1,76 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
-#define assets_h
+#include "assets.h"
+#include "validation.h"
 
-extern int assetID[100];
-extern char assetName[100][50];
-extern char assetType[100][30];
-extern float purchaseValue[100];
-extern char department[100][50];
-extern char assetCondition[100][30];
+/* Parallel arrays: index i in every array describes the same asset */
+int assetID[MAX_ASSETS];
+char assetName[MAX_ASSETS][50];
+char assetType[MAX_ASSETS][30];
+float purchaseValue[MAX_ASSETS];
+char department[MAX_ASSETS][50];
+char assetCondition[MAX_ASSETS][30];
 
 int assetCount = 0;
 
-void addAsset(){
+/* Accepts good/fair/poor in any letter case and rewrites it as Good/Fair/Poor.
+   Returns 1 if recognised, 0 otherwise. */
+static int normalizeCondition(char *text)
+{
+    for (int i = 0; text[i] != '\0'; i++)
+    {
+        text[i] = (char)tolower((unsigned char)text[i]);
+    }
 
-    if (assetCount >= 100)
+    if (strcmp(text, "good") == 0)
+    {
+        strcpy(text, "Good");
+        return 1;
+    }
+    if (strcmp(text, "fair") == 0)
+    {
+        strcpy(text, "Fair");
+        return 1;
+    }
+    if (strcmp(text, "poor") == 0)
+    {
+        strcpy(text, "Poor");
+        return 1;
+    }
+    return 0;
+}
+
+/* Returns the index of the asset with this ID, or -1 if not found */
+static int findAsset(int id)
+{
+    for (int i = 0; i < assetCount; i++)
+    {
+        if (assetID[i] == id)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void printAsset(int i)
+{
+    printf("Asset ID: %d\n", assetID[i]);
+    printf("Asset Name: %s\n", assetName[i]);
+    printf("Asset Type: %s\n", assetType[i]);
+    printf("Purchase Value: N$%.2f\n", purchaseValue[i]);
+    printf("Department: %s\n", department[i]);
+    printf("Condition: %s\n", assetCondition[i]);
+}
+
+void addAsset(void){
+
+    int id;
+    double value;
+
+    if (assetCount >= MAX_ASSETS)
     {
         printf("\nMaximum limit reached. Cannot add more assets.\n");
         return;
@@ -22,36 +78,47 @@ void addAsset(){
 
     printf("\n========== ADD ASSET ==========\n");
 
-    printf("Enter Asset ID: ");
-    scanf("%d", &assetID[assetCount]);
-    while (getchar() != '\n');
+    for (;;)
+    {
+        if (!promptID("Enter Asset ID: ", &id))
+        {
+            return;
+        }
+        if (findAsset(id) == -1)
+        {
+            break;
+        }
+        printf("That Asset ID is already in use. Try again.\n");
+    }
+    assetID[assetCount] = id;
 
-    printf("Enter Asset Name: ");
-    fgets(assetName[assetCount], sizeof(assetName[assetCount]), stdin);
-    assetName[assetCount][strcspn(assetName[assetCount], "\n")] = '\0';
+    if (!promptText("Enter Asset Name: ", assetName[assetCount], sizeof(assetName[assetCount]))) return;
+    if (!promptText("Enter Asset Type: ", assetType[assetCount], sizeof(assetType[assetCount]))) return;
 
-    printf("Enter Asset Type: ");
-    fgets(assetType[assetCount], sizeof(assetType[assetCount]), stdin);
-    assetType[assetCount][strcspn(assetType[assetCount], "\n")] = '\0';
+    if (!promptMoney("Enter Purchase Value (N$): ", &value)) return;
+    purchaseValue[assetCount] = (float)value;
 
-    printf("Enter Purchase Value: ");
-    scanf("%f", &purchaseValue[assetCount]);
-    while (getchar() != '\n');
+    if (!promptText("Enter Department: ", department[assetCount], sizeof(department[assetCount]))) return;
 
-    printf("Enter Department: ");
-    fgets(department[assetCount], sizeof(department[assetCount]), stdin);
-    department[assetCount][strcspn(department[assetCount], "\n")] = '\0';
-
-    printf("Enter Condition: ");
-    fgets(assetCondition[assetCount], sizeof(assetCondition[assetCount]), stdin);
-    assetCondition[assetCount][strcspn(assetCondition[assetCount], "\n")] = '\0';
+    for (;;)
+    {
+        if (!promptText("Enter Condition (Good / Fair / Poor): ", assetCondition[assetCount], sizeof(assetCondition[assetCount])))
+        {
+            return;
+        }
+        if (normalizeCondition(assetCondition[assetCount]))
+        {
+            break;
+        }
+        printf("Condition must be Good, Fair or Poor.\n");
+    }
 
     assetCount++;
 
     printf("\nAsset added successfully!\n");
 }
 
-void displayAssets(){
+void displayAssets(void){
 
     if (assetCount == 0)
     {
@@ -65,20 +132,14 @@ void displayAssets(){
     {
         printf("\nAsset %d\n", i + 1);
         printf("-----------------------------\n");
-
-        printf("Asset ID: %d\n", assetID[i]);
-        printf("Asset Name: %s\n", assetName[i]);
-        printf("Asset Type: %s\n", assetType[i]);
-        printf("Purchase Value: N$%.2f\n", purchaseValue[i]);
-        printf("Department: %s\n", department[i]);
-        printf("Condition: %s\n", assetCondition[i]);
+        printAsset(i);
     }
 }
 
-void searchAsset(){
+void searchAsset(void){
 
     int searchID;
-    int found = 0;
+    int index;
 
     if (assetCount == 0)
     {
@@ -88,36 +149,25 @@ void searchAsset(){
 
     printf("\n========== SEARCH ASSET ==========\n");
 
-    printf("Enter Asset ID to search: ");
-    scanf("%d", &searchID);
-    while (getchar() != '\n');
-
-    for (int i = 0; i < assetCount; i++)
+    if (!promptID("Enter Asset ID to search: ", &searchID))
     {
-        if (assetID[i] == searchID)
-        {
-            printf("\nAsset Found!\n");
-            printf("-----------------------------\n");
-
-            printf("Asset ID: %d\n", assetID[i]);
-            printf("Asset Name: %s\n", assetName[i]);
-            printf("Asset Type: %s\n", assetType[i]);
-            printf("Purchase Value: N$%.2f\n", purchaseValue[i]);
-            printf("Department: %s\n", department[i]);
-            printf("Condition: %s\n", assetCondition[i]);
-
-            found = 1;
-            break;
-        }
+        return;
     }
 
-    if (found == 0)
+    index = findAsset(searchID);
+
+    if (index == -1)
     {
         printf("\nAsset not found.\n");
+        return;
     }
+
+    printf("\nAsset Found!\n");
+    printf("-----------------------------\n");
+    printAsset(index);
 }
 
-void assetMenu(){
+void assetMenu(void){
 
     int choice;
 
@@ -133,8 +183,7 @@ void assetMenu(){
         printf("====================================\n");
         printf("Enter your choice: ");
 
-        scanf("%d", &choice);
-        while (getchar() != '\n');
+        choice = readInt(4);
 
         switch (choice)
         {

@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 #include "budget.h"
-
-void clearInputBuffer(void);
+#include "validation.h"
 
 Budget budgets[MAX_DEPARTMENTS];
 int budgetCount = 0;
 
 void calculateBudgetStatus(Budget *b) {
     b->remainingBudget = b->allocatedBudget - b->expenditure;
-    
+
     if (b->remainingBudget < 0) {
         b->isExceeded = 1;
     } else {
@@ -18,42 +17,14 @@ void calculateBudgetStatus(Budget *b) {
 }
 
 void manageBudgets(void) {
-    if (budgetCount >= MAX_DEPARTMENTS) {
-        printf("\nError: Cannot add more departments. Storage full.\n");
-        return;
-    }
-
     Budget tempBudget;
-    int valid = 0;
     int foundIndex = -1;
 
     printf("\n--- Departmental Budget Entry ---\n");
-    clearInputBuffer();
 
-    printf("Enter Department Name: ");
-    fgets(tempBudget.departmentName, STR_LEN, stdin);
-    tempBudget.departmentName[strcspn(tempBudget.departmentName, "\n")] = '\0';
-
-    while (!valid) {
-        printf("Enter Allocated Budget (N$): ");
-        if (scanf("%lf", &tempBudget.allocatedBudget) == 1 && tempBudget.allocatedBudget >= 0) {
-            valid = 1;
-        } else {
-            printf("Invalid amount. Please enter a positive number.\n");
-            clearInputBuffer();
-        }
-    }
-
-    valid = 0;
-    while (!valid) {
-        printf("Enter Total Expenditure (N$): ");
-        if (scanf("%lf", &tempBudget.expenditure) == 1 && tempBudget.expenditure >= 0) {
-            valid = 1;
-        } else {
-            printf("Invalid amount. Please enter a positive number.\n");
-            clearInputBuffer();
-        }
-    }
+    if (!promptText("Enter Department Name: ", tempBudget.departmentName, sizeof(tempBudget.departmentName))) return;
+    if (!promptMoney("Enter Allocated Budget (N$): ", &tempBudget.allocatedBudget)) return;
+    if (!promptMoney("Enter Total Expenditure (N$): ", &tempBudget.expenditure)) return;
 
     calculateBudgetStatus(&tempBudget);
 
@@ -68,10 +39,17 @@ void manageBudgets(void) {
         budgets[foundIndex] = tempBudget;
         printf("Budget for %s updated successfully!\n", tempBudget.departmentName);
     } else {
+        if (budgetCount >= MAX_DEPARTMENTS) {
+            printf("\nError: Cannot add more departments. Storage full.\n");
+            return;
+        }
         budgets[budgetCount] = tempBudget;
         budgetCount++;
         printf("New budget recorded successfully!\n");
     }
+
+    printf("Remaining: N$%.2f - Status: %s\n", tempBudget.remainingBudget,
+           tempBudget.isExceeded ? "OVER BUDGET" : "WITHIN BUDGET");
 }
 
 void displayBudgets(void) {
@@ -80,9 +58,9 @@ void displayBudgets(void) {
         return;
     }
 
-    printf("\n====================================================================================\n");
-    printf("%-18s %-18s %-18s %-18s %-18s\n", "Department", "Allocated (N$)", "Expenditure (N$)", "Remaining (N$)", "Status");
-    printf("====================================================================================\n");
+    printf("\n============================================================================================\n");
+    printf("%-20s %-18s %-18s %-18s %s\n", "Department", "Allocated (N$)", "Expenditure (N$)", "Remaining (N$)", "Status");
+    printf("============================================================================================\n");
 
     for (int i = 0; i < budgetCount; i++) {
         char statusStr[20];
@@ -100,5 +78,39 @@ void displayBudgets(void) {
                budgets[i].remainingBudget,
                statusStr);
     }
-    printf("====================================================================================\n");
+    printf("============================================================================================\n");
+}
+
+void budgetMenu(void) {
+    int choice;
+
+    do {
+        printf("\n====================================\n");
+        printf("         BUDGET MANAGEMENT\n");
+        printf("====================================\n");
+        printf("1. Enter / Update Department Budget\n");
+        printf("2. Display Budgets\n");
+        printf("3. Back to Main Menu\n");
+        printf("====================================\n");
+        printf("Enter your choice: ");
+
+        choice = readInt(3);
+
+        switch (choice) {
+            case 1:
+                manageBudgets();
+                break;
+
+            case 2:
+                displayBudgets();
+                break;
+
+            case 3:
+                printf("Returning to main menu...\n");
+                break;
+
+            default:
+                printf("Invalid choice. Please enter a number from 1 to 3.\n");
+        }
+    } while (choice != 3);
 }

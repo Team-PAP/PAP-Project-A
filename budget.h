@@ -2,7 +2,10 @@
 #define BUDGET_H
 
 #define MAX_DEPARTMENTS 50
+
+#ifndef STR_LEN
 #define STR_LEN 50
+#endif
 
 typedef struct {
     char departmentName[STR_LEN];
@@ -18,5 +21,6 @@ extern int budgetCount;
 void calculateBudgetStatus(Budget *b);
 void manageBudgets(void);
 void displayBudgets(void);
+void budgetMenu(void);
 
 #endif

@@ -3,7 +3,7 @@
 
 #define MAX_SUPPLIERS 100
 
-struct Suplliers
+struct Supplier
 {
     int id;
     char name[50];
