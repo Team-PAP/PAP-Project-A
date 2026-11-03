@@ -5,7 +5,7 @@ void displayReports(void);
 
 void employeeReport(void);
 void budgetReport(void);
-void supplierReport(void);
+void supplierReport(struct Supplier suppliers[], int supplierCount);
 void assetReport(void);
 
 #endif
