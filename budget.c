@@ -81,7 +81,7 @@ void displayBudgets(void) {
     }
 
     printf("\n====================================================================================\n");
-    printf("%-18s %-18s %-18s %-18s %-18s\n", "Department", "Allocated (N$)", "Expenditure (N$)", "Remaining (N$)", "Status");
+    printf("%-20s %-18s %-18s %-18s %-18s\n", "Department", "Allocated (N$)", "Expenditure (N$)", "Remaining (N$)", "Status");
     printf("====================================================================================\n");
 
     for (int i = 0; i < budgetCount; i++) {
