@@ -32,7 +32,7 @@ static int readChoice(void)
 
     if (fgets(buffer, sizeof(buffer), stdin) == NULL)
     {
-        return 5;   /* input closed (e.g. Ctrl+Z): leave the menu instead of looping forever */
+        return 5;   
     }
     if (sscanf(buffer, "%d", &choice) != 1)
     {
